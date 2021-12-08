@@ -21,7 +21,7 @@ Segments also specify where and how they should be loaded in Virtual / Physical 
 ## Example 
 The red cross is the position of the main function
 #### Static link binary
-![[Pasted image 20211011164319.png]]
+![[Static_link_binary.png]]
 
 #### Dynamically linked binary
-![[Pasted image 20211011164503.png]]
+![[Dynamically_linked_binary.png]]

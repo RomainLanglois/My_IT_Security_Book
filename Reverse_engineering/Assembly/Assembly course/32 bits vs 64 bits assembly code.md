@@ -5,4 +5,4 @@
 	- List of syscall : 
 		- https://syscalls.w3challs.com/
 
-![[Pasted image 20211116152519.png]]
+![[32_bits_VS_64_bits_Assembly_Code-Main_Differences.png]]

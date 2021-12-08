@@ -1,9 +1,9 @@
 # Program header C representation
-![[Pasted image 20211013031645.png]]
+![[ELF_File_Program_Header_C_Representation.png]]
 
 ## Flags
-![[Pasted image 20211013031552.png]]
+![[ELF_File_Program_Header_Flags.png]]
 
 # Program header (Difference between x86 and x64)
 The position of the "flags" parameter is not the same
-![[Pasted image 20211013031908.png]]
+![[ELF_File_Program_Header_x86-vs-x64.png]]

@@ -1,2 +1,2 @@
 # Section header C representation
-![[Pasted image 20211013034156.png]]
+![[ELF_File_Section_C_Representation.png]]

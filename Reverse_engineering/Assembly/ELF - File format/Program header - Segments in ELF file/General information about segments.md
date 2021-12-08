@@ -1,7 +1,7 @@
 # Segments in ELF file
 Each segment is defined by a program header
 
-![[Pasted image 20211013025822.png]]
+![[ELF_File_Program_Header_&_Segments.png]]
 
 
 ## Program header
@@ -9,7 +9,7 @@ Each segment is defined by a program header
 2. Specify the size of each program header (e_phentsize)
 3. Specify the number of program header (e_phnum)
 
-![[Pasted image 20211013030614.png]]
+![[ELF_File_Program_Header.png]]
 
 ## Read all program segments
 ```bash

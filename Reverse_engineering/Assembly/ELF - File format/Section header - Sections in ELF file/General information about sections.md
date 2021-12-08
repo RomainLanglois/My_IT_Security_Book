@@ -1,13 +1,13 @@
 # Sections in ELF file
 Each section is defined by a section header
-![[Pasted image 20211013032953.png]]
+![[ELF_File_Sections_Header_&_Sections.png]]
 
 ## Section header
 1.  Specify location the program header table (e_shoff)
 2.  Specify the size of each program header (e_shentsize)
 3.  Specify the number of program header (e_shnum)
 
-![[Pasted image 20211013033413.png]]
+![[ELF_File_Section_Headers.png]]
 
 ## Important note
 Sections are not necessary to run a program. They are used to debug.
