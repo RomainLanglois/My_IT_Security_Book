@@ -70,15 +70,17 @@ wget https://www.spice-space.org/download/windows/spice-guest-tools/spice-guest-
 ```
 
 
-## How to mount a share folder (Check with the Mapped option ??)
-### WINDOWS (A tester)
+## How to mount a share folder
+### WINDOWS
 #### Set-up a SMB folder (from the Linux machine) 
-(TODO: Lien du github de impacket)
 Based on my note from the OSCP book (From a Linux machine):
 ```bash
+# Git clone impacket
+sudo python3 -m pip3 install impacket
+git clone https://github.com/SecureAuthCorp/impacket.git
+
 # A password needs to be set on newer version of Windows
-sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py kali -smb2support -username kali -pas
-sword kali .
+sudo python3 /usr/share/doc/python3-impacket/examples/smbserver.py kali -smb2support -username kali -password kali .
 ```
 
 #### Set-up a SMB folder (from the Windows machine)
