@@ -56,6 +56,11 @@ vmdk_file=$(ls $filename_no_extension*.vmdk)
 qemu-img convert -O qcow2 $vmdk_file $filename_no_extension.qcow2
 ```
 
+## Convert VMDK file (VMWARE) to QCOW2 (TODO)
+```bash
+qemu-img convert -f vmdk -O qcow2 hdd.vmdk hdd.qcow2
+```
+
 ## Make Copy & Paste Working
  ```bash
 #### Linux
