@@ -29,8 +29,21 @@ grep -i libvirt /etc/group
 
 # Add the current user to the group
 sudo usermod -aG libvirt $USER
+
+# It is necessary to disconnect the user sesssion and then reconnect
+# Check if the current user is a member of libvirt group
+id
 ```
 
+## Start KVM administration gui
+#### From CMD
+```bash
+virt-manager
+```
+#### From GUI
+- Just look for "virt-manager" and execute it
+
+# Misc
 ## How to fix relative mouse pointer position
 - https://superuser.com/questions/291650/problem-with-kvm-switch-and-erratic-mouse-movement-on-windows-server-2008
 
@@ -48,17 +61,29 @@ then
         exit 1
 fi
 
-filename_no_extension=$(echo $1 | cut -d "." -f1)
-echo "Extracting vmdk file from OVA..."
-tar xvf $1
-echo "Converting vmdk file to qcow2"
-vmdk_file=$(ls $filename_no_extension*.vmdk)
-qemu-img convert -O qcow2 $vmdk_file $filename_no_extension.qcow2
-```
+filename=$(basename $1)
+filename_extension=$(echo "${filename##*.}")
+filename_no_extension=${filename%.*}
 
-## Convert VMDK file (VMWARE) to QCOW2 (TODO)
-```bash
-qemu-img convert -f vmdk -O qcow2 hdd.vmdk hdd.qcow2
+if [ $filename_extension == "ova" ]
+then
+	echo "Extracting vmdk file from OVA..."
+	tar xvf $filename
+	echo "Converting vmdk file to qcow2"
+	vmdk_file=$(find . -name "Kali-Linux-2021.4a-virtualbox-amd64*.vmdk")
+	qemu-img convert -O qcow2 $vmdk_file $filename_no_extension.qcow2
+	echo "Cleaning current directory"
+	rm $filename_no_extension.ovf $filename_no_extension.mf $vmdk_file
+	exit 0
+elif [ $filename_extension == "vmdk" ]
+then
+	qemu-img convert -O qcow2 $filename $filename_no_extension.qcow2
+	exit 0
+else
+	echo "Invalid file format"
+	echo "Allowed file format are ova and vmdk"
+	exit 1
+fi
 ```
 
 ## Make Copy & Paste Working
@@ -136,6 +161,17 @@ semanage fcontext -a -t svirt_image_t "/share(/.*)?"
 restorecon -vR /share
 ```
 
+
+## Start a VM using UEFI instead of BIOS
+##### On ubuntu
+```bash
+sudo apt install ovmf
+```
+##### While creating a VM
+- Step 5 of 5, Customize configuration before install, Set Firmware to UEFI
+
+##### More details here
+- https://ostechnix.com/enable-uefi-support-for-kvm-virtual-machines-in-linux/
 
 ## Interesting links
 - https://doc.fedora-fr.org/wiki/Virtualisation_:_KVM,_Qemu,_libvirt_en_images
