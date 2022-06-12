@@ -161,7 +161,6 @@ semanage fcontext -a -t svirt_image_t "/share(/.*)?"
 restorecon -vR /share
 ```
 
-
 ## Start a VM using UEFI instead of BIOS
 ##### On ubuntu
 ```bash
@@ -172,6 +171,9 @@ sudo apt install ovmf
 
 ##### More details here
 - https://ostechnix.com/enable-uefi-support-for-kvm-virtual-machines-in-linux/
+
+## Get Windows KVM tools
+- https://github.com/virtio-win/virtio-win-pkg-scripts/blob/master/README.md
 
 ## Interesting links
 - https://doc.fedora-fr.org/wiki/Virtualisation_:_KVM,_Qemu,_libvirt_en_images
