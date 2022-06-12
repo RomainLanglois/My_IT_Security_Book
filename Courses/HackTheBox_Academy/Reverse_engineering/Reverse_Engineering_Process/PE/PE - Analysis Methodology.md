@@ -1,4 +1,26 @@
 # PE - Analysis Methodology
+## Checklist
+This checklist should get you started:
+-   File Context and Delivery
+-   File Information & Header Analysis
+-   Get Basic PE information
+-   Simple Search
+-   Collect Strings
+-   Check AV vendors
+-   Quick VM Detonation
+-   Capture network information
+
+Not all elements are detailled here. No need for that. More informations by following this link :
+- https://malwareunicorn.org/workshops/re101.html#7
+
+### File Context and Delivery
+When you receive the malware binary, it's important to ask how the malware got there in the first place.
+Questions to ask:
+-   Did it come from an email?
+-   Did it come from a browser download?
+-   Was it quarantined in an Anti-Virus?
+-   Is it an anomalous process running?
+
 ## File information & Header Analysis
 - Use a <b>file</b> command to determine filetype
 - Verify the file header using hex editor (e.g. HxD)

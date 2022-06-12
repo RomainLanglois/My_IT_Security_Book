@@ -10,5 +10,6 @@
 | Step Over | F8 |
 | Run | F9 |
 | Edit instruction | Space |
+| G | graph view |
 
 ![[x64dbg_gui.gif]]
