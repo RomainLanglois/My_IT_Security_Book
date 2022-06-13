@@ -81,15 +81,18 @@ hwclock -r
 ```
 ### OS date
 ```bash
-date 
+date
 date -s "2 OCT 2006 18:00:00"
 ```
 
 ### Decompressing TarBall Stage3 (hardened one)
 ```bash
 cd /mnt/gentoo
+# Using terminal navigator
+links https://www.gentoo.org/downloads/mirror/
+# Wget directly the Stage3 Tarball
 wget https://bouncer.gentoo.org/fetch/root/all/releases/amd64/autobuilds/20220522T170533Z/stage3-amd6$
-tar xpvf stage3-amd64-hardened-openrc-20220522T170533Z.tar.xz --xattrs-include='*.*' --numeric-owner
+tar xpvf stage3-amd64-hardened-openrc-*.tar.xz --xattrs-include='*.*' --numeric-owner
 rm stage3-amd64-hardened-openrc-20220522T170533Z.tar.xz
 ```
 
@@ -164,92 +167,105 @@ nano /etc/conf.d/keymaps
 	keymap="fr" 
 ```
 
-## License problems
-- https://wiki.gentoo.org/wiki//etc/portage/package.license
+### Adding a license
+```bash
+https://wiki.gentoo.org/wiki/etc/portage/package.license
 #### folder where are stored the license
-- ls /var/db/repos/gentoo/licenses/
-- nano /etc/portage/package.license
-	- sys-kernel/linux-firmware linux-fw-redistributable no-source-code
-	- 
-- emerge --ask sys-kernel/linux-firmware
-- emerge -q sys-kernel/gentoo-sources genkernel
-- mv /usr/src/linux<kernel_version> /usr/src/linuxemerge -q net-misc/dhcpcd
-- emerge -q sys-fs/cryptsetup
-## Install a compression software (kernel compression optimization)
-- emerge -q app-arch/lzop app-arch/lz4
+ls /var/db/repos/gentoo/licenses/
+nano /etc/portage/package.license
+	sys-kernel/linux-firmware linux-fw-redistributable no-source-code
+```
 
-## Kernel configuration (Automatic way)
-- genkernel all
-- genkernel --luks --lvm --no-zfs all
-## Build only the initramfs 
-- genkernel --luks --lvm initramfs 
+### Install Linux firmware and kernel
+```bash
+emerge --ask sys-kernel/linux-firmware
+emerge -q sys-kernel/gentoo-sources genkernel
+mv /usr/src/linux<kernel_version> /usr/src/linux
+emerge -q sys-fs/cryptsetup sys-fs/lvm2
 
-## Kernel configuration (Manual way)
-- mv /usr/srv/linux<something> /usr/srv/linux
-- cd /usr/src/linux
-- make menuconfig
-- make && make modules_install && make install
-## To build a initramfs for a specify kernel configuration
-- genkernel --install --kernel-config=/usr/src/linux/.config initramfs
-- ls /boot/initramfs*
+(chroot) livecd /etc # vim genkernel.conf
+...
+LVM="yes"
+...
+LUKS="yes"
+...
+```
 
-## Network configuration (DHCP)
-- emerge --noreplace --quiet net-misc/netifrc
-- nano /etc/conf.d/net
-	- config_eth0="dhcp"
-# Need some configurations before (not finished)
-- emerge -q net-misc/dhcpcd
-- cd /etc/init.d
-- ln -s net.lo net.eth0
-- rc-update add net.eth0 default
+### Building Kernel and initramfs (Automatic way)
+```bash
+genkernel --luks --lvm --no-zfs all
+genkernel --luks --lvm initramfs 
+```
 
-# Configure the partion and their mounting point
-## get UUID (/etc/fstab configuration) - to keep inside a notepad
-- blkid
-- nano /etc/fstab
+### Building Kernel and initramfs (Manual way)
+```bash
+mv /usr/srv/linux<something> /usr/srv/linux
+cd /usr/src/linux
+make menuconfig
+make && make modules_install && make install
+genkernel --install --kernel-config=/usr/src/linux/.config initramfs
+ls /boot/initramfs*
+```
+
+### Network configuration (DHCP)
+```bash
+emerge --noreplace --quiet net-misc/netifrc
+nano /etc/conf.d/net
+	config_eth0="dhcp"
+emerge -q net-misc/dhcpcd
+cd /etc/init.d
+ln -s net.lo net.eth0
+rc-update add net.eth0 default
+```
+
+### Configure the partion and their mounting point
+```bash
+blkid
+nano /etc/fstab
 	# https://wiki.gentoo.org/wiki/Handbook:AMD64/Full/Installation/fr#.C3.80_propos_de_fstab
-	- configure the /etc/fstab based on the previous UUID 
+	configure the /etc/fstab based on the previous UUID 
 	# <fs>                                          <mountpoint>    <type>          <opts>          <dump/pass>
 	UUID=DB1D-89C5                                  /boot           vfat            noauto,noatime  1 2
 	UUID=6bedbbd8-cea9-4734-9c49-8e985c61c120       /               ext4            defaults        0 1
 	UUID=5d6ff087-50ce-400f-91c4-e3378be23c00       /home           ext4            defaults        0 1
+```
 
-# Install the bootloader
-- emerge -q sys-boot/grub:2
+### Install the bootloader
+```bash
+emerge -q sys-boot/grub:2
+echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use/sys-boot
+```
+ 
+### Configure grub to boot using luks
+```bash
+blkid | grep -i luks
+nano /etc/default/grub
+	GRUB_CMDLINE_LINUX="dolvm crypt_root=UUID=(REPLACE ME WITH sdb3 UUID from above) root=/dev/mapper/vgO-root"
+echo 'GRUB_PLATFORMS="efi-64"' >> /etc/portage/make.conf
+grub-install --target=x86_64-efi --efi-directory=/boot
+grub-mkconfig -o /boot/grub/grub.cfg
+rc-update add lvm boot # -> Not sure for 'default' parameter 
+```
 
-## BIOS part
-- grub-install /dev/sda
-- grub-mkconfig -o /boot/grub/grub.cfg
+### Configure hostname and add a new user (home folder should be created)
+```bash
+nano /etc/conf.d/hostname
+	hostname='GentooBox' -> MachineName
+emerge -q app-admin/sudo
+useradd -m -G users,wheel,audio -s /bin/bash <username>
+passwd
+passwd <username>
+```
 
-## UEFI part
-- echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use/sys-boot 
-## Configure grub to boot using luks
-- blkid | grep -i luks
-- nano /etc/default/grub
-	- GRUB_CMDLINE_LINUX="dolvm crypt_root=UUID=(REPLACE ME WITH sdb3 UUID from above)"
-- echo 'GRUB_PLATFORMS="efi-64"' >> /etc/portage/make.conf
-- grub-install --target=x86_64-efi --efi-directory=/boot
-- grub-mkconfig -o /boot/grub/grub.cfg
-- rc-update add lvm default 
+### Umount and reboot 
+```bash
+lsblk
+umount /dev/sdx2
+swapoff /dev/sdx3
+exit
+source /etc/profile
+umount -R /mnt/gentoo
+lsblk
+reboot
+```
 
-# Install all necessary packages you need (pretty long)
-- Use the dependancies.txt from mental on his script
-- emerge -q app-admin/sudo
-
-
-# Configure hostname and add a new user (home folder should be created)
-- nano /etc/conf.d/hostname
-	- hostname='GentooBox' -> MachineName
-- useradd -m -G users,wheel,audio -s /bin/bash <username>
-- passwd
-- passwd <username>
-
-# Umount and reboot 
-- lsblk
-- umount /dev/sdx2
-- swapoff /dev/sdx3
-- exit
-- source /etc/profile
-- umount -R /mnt/gentoo
-- lsblk
-- reboot
