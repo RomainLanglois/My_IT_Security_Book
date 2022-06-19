@@ -1,9 +1,8 @@
-```bash
 #!/bin/bash
 echo "########################################"
 echo "Formating and encrypting the designated disk"
 lsblk
-echo "Please enter the disk to partition:"
+echo "Please enter the disk to partition (not full path):"
 read disk
 wipefs -a /dev/$disk
 
@@ -20,15 +19,17 @@ parted -a optimal /dev/$disk -s 'name 3 lvm'
 parted -a optimal /dev/$disk -s 'set 3 lvm on'
 parted -a optimal /dev/$disk -s 'print'
 
+echo "########################################"
+echo "Formating encrypting and mounting the luks partition"
 lsblk
 modprobe dm-crypt
-echo "Please enter the partion to encrypt with luks"
+echo "Please enter the partion to encrypt with luks:"
 read luks_partition
 cryptsetup luksFormat /dev/$luks_partition
 cryptsetup luksOpen /dev/$luks_partition lvm 
 lvm pvcreate /dev/mapper/lvm 
 vgcreate vg0 /dev/mapper/lvm 
-lvcreate -L 25G -n root vg0 
+lvcreate -L 10G -n root vg0 
 lvcreate -l 100%FREE -n home vg0
 mkfs.fat -F 32 /dev/$disk\2
 mkfs.ext4 /dev/mapper/vg0-root 
@@ -36,15 +37,15 @@ mkfs.ext4 /dev/mapper/vg0-home
 mount /dev/mapper/vg0-root /mnt/gentoo
 mkdir /mnt/gentoo/home
 mount /dev/mapper/vg0-home /mnt/gentoo/home
-echo "Formating encrypting and mounting done !"
+echo "Done !"
 echo "########################################"
 
 echo "############################################"
 echo "Date configuration"
 date
-echo "Please : enter a date (Example : date -s '13 JUN 2022 20:59:00')"
+echo "Please : enter a date (Example : 13 JUN 2022 20:59:00):"
 read date
-date -s $date
+date -s "$date"
 echo "Done !"
 echo "########################################"
 
@@ -61,7 +62,8 @@ echo "############################################"
 echo "Setting-up make.conf"
 echo 'COMMON_FLAGS="-march=native -O2 -pipe"' >> etc/portage/make.conf
 echo 'GRUB_PLATFORMS="efi-64"' >> etc/portage/make.conf
-echo 'MAKEOPTS="-j4"' >> etc/portage/make.conf
+echo "MAKEOPTS=\"-j$(nproc)\"" >> /etc/portage/make.conf
+echo 'USE="-systemd"' >> etc/portage/make.conf
 echo "done !"
 echo "########################################"
 
@@ -85,5 +87,4 @@ mount --make-rslave /mnt/gentoo/dev
 mount --bind /run /mnt/gentoo/run
 mount --make-slave /mnt/gentoo/run
 chroot /mnt/gentoo /bin/bash
-```
 

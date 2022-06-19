@@ -1,11 +1,10 @@
-```bash
 #!/bin/bash
 echo "########################################"
 echo "Preparing the environment and emerging @world"
 source /etc/profile
 export PS1="(chroot) ${PS1}"
-
-echo "Please enter disk partion to mount boot"
+lsblk
+echo "Please enter disk partion to mount boot:"
 read boot_partition
 mount /dev/$boot_partition /boot
 emerge-webrsync
@@ -23,7 +22,7 @@ echo "fr_FR ISO-8859-1" >> /etc/locale.gen
 echo "fr_FR.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
 eselect locale list
-echo "Please select your locale"
+echo "Please select your locale:"
 read locale
 eselect locale set $locale
 env-update && source /etc/profile && export PS1="(chroot) ${PS1}"
@@ -52,13 +51,13 @@ echo "########################################"
 echo "Installing lvm cryptsetup then the linux Kernel"
 emerge -q sys-fs/cryptsetup sys-fs/lvm2
 genkernel --luks --lvm --no-zfs all
-genkernel --luks --lvm initramfs 
+genkernel --luks --lvm initramfs
 echo "Done !"
 echo "########################################"
 
 echo "########################################"
 ip a
-echo "DHCP configuration : please enter network interface"
+echo "DHCP configuration : please enter network interface:"
 read network_interface
 emerge --noreplace --quiet net-misc/netifrc
 echo 'config_'$network_interface="dhcp" >> /etc/conf.d/net
@@ -71,7 +70,9 @@ echo "########################################"
 
 echo "########################################"
 blkid
-echo "Please enter UUID LUKS for /boot then / then /home"
+# Revoir la manière d'entrer les informations piur compléter le /etc/fstab -> PAS CLAIR !
+# Mais fonctionne correctement !!
+echo "Please enter UUID LUKS for /boot then / then /home:"
 read UUID_boot
 read UUID_luks_root
 read UUID_luks_home
@@ -84,13 +85,11 @@ echo "########################################"
 echo "########################################"
 echo "Installing and configuring the bootloader (grub)"
 emerge -q sys-boot/grub:2
-echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use/sys-boot
+echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use
 blkid | grep -i luks
-echo "Please enter the UUID for the partion holding the LUKS container"
+echo "Please enter the UUID for the partion holding the LUKS container:"
 read luks_container
-
-sed 's/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"dolvm crypt_root=UUID=$luks_container\"/g' /etc/default/grub
-
+sed -i "s/\#GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"dolvm crypt_root=UUID=$luks_container\" /g" /etc/default/grub
 grub-install --target=x86_64-efi --efi-directory=/boot
 grub-mkconfig -o /boot/grub/grub.cfg
 rc-update add lvm boot
@@ -99,28 +98,28 @@ echo "########################################"
 
 echo "########################################"
 echo "Changing box name and adding/configuring a new user"
-echo "Please enter a name for the box"
+echo "Please enter a name for the box:"
 read box_name
-
-sed 's/hostname=\'GentooBox\'/hostname=\'$box_name\'/g' /etc/conf.d/hostname
-
+sed -i "s/hostname=\"localhost\"/hostname=\'$box_name\'/g" /etc/conf.d/hostname
 emerge -q app-admin/sudo
-useradd -m -G users,wheel,audio -s /bin/bash <username>
+echo "Please enter the username which will be used for this system:"
+read username
+useradd -m -G wheel -s /bin/bash $username
 passwd
-passwd <username>
+passwd $username
 echo "Done !"
 echo "########################################"
 
 echo "########################################"
 echo "Umounting the environment"
 cd
-lsblk
 umount /dev/$boot_partition
+lsblk
 exit
 source /etc/profile
+cd
 umount /mnt/gentoo/home
 umount -R /mnt/gentoo
 lsblk
 echo "Done !"
 echo "########################################"
-```
