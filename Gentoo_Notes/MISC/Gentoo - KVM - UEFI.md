@@ -6,4 +6,4 @@
         - Caution : Q35 chipset does not support IDE connection, only SATA and SCSI
         - It is necessary to remove all IDE connectors and replace them with SATA or SCSI
 - ls /sys/firmware/efi
-        - Check if you are using UEFI 
+        - Check if you are using UEFI

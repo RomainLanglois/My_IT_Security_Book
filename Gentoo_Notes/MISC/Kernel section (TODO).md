@@ -14,11 +14,11 @@
 - sudo make menuconfig
 - sudo make && sudo make modules_install && sudo make install
 
-
 # Upgrade gentoo Linux Kernel
 - emerge --sync
 - emerge --update --deep --with-bdeps=y --newuse sys-kernel/gentoo-sources --> Gentoo documentation
 	- emerge -uDNq --with-bdeps=y sys-kernel/gentoo-sources --> Same command
+
 ## Backup kernel config
 - cp /usr/src/linux/.config $(uname -r).config
 - cd /usr/src/
