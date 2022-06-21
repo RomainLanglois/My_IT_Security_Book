@@ -15,29 +15,49 @@
 - sudo make && sudo make modules_install && sudo make install
 
 # Upgrade gentoo Linux Kernel
-- emerge --sync
-- emerge --update --deep --with-bdeps=y --newuse sys-kernel/gentoo-sources --> Gentoo documentation
-	- emerge -uDNq --with-bdeps=y sys-kernel/gentoo-sources --> Same command
+```bash
+emerge --sync
+emerge --update --deep --with-bdeps=y --newuse sys-kernel/gentoo-sources
+# Same command (short format)
+emerge -uDNq --with-bdeps=y sys-kernel/gentoo-sources
+```
 
 ## Backup kernel config
-- cp /usr/src/linux/.config $(uname -r).config
-- cd /usr/src/
-- eselect kernel list
-- eselect kernel set 2
-- eselect kernel list
-- cd linux
-## Make clean ?? (link with a make file ??)
-- make mrproper
-- cp $(uname -r).config /usr/src/linux
+```bash
+cp /usr/src/linux/.config $(uname -r).config
+cd /usr/src/
+eselect kernel list
+eselect kernel set 2
+eselect kernel list
+cd linux
+```
+
+## Prepare the kernel folder
+```bash
+make mrproper
+cp $(uname -r).config /usr/src/linux
+```
+
 ## If you need to change the kernel configuration
-- make menuconfig
+```bash
+make menuconfig
+```
 ## copy old config option to the new one
 ### Options not defined on the new kernel will be set to default
-- make olddefconfig
+```bash
+make olddefconfig
+```
 ## Prepare modules
-- make modules_prepare
+```bash
+make modules_prepare
+```
 ## Compile the new kernel
-- make -j4 && make modules_install && make install 
+```bash
+make -j6 && make modules_install && make install 
+genkernel --luks --lvm --kernel-config=/usr/src/linux/.config initramfs
+```
 ## Check if config exists
-- ls -al /boot
-- reboot
+```bash
+ls -al /boot
+reboot
+```

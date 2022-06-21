@@ -1,4 +1,6 @@
 #!/bin/bash
+make_file=/mnt/gentoo/etc/portage/make.conf
+
 echo "########################################"
 echo "Formating and encrypting the designated disk"
 lsblk
@@ -60,17 +62,36 @@ echo "###########################################"
 
 echo "############################################"
 echo "Setting-up make.conf"
-echo 'COMMON_FLAGS="-march=native -O2 -pipe"' >> etc/portage/make.conf
-echo 'GRUB_PLATFORMS="efi-64"' >> etc/portage/make.conf
-echo "MAKEOPTS=\"-j$(nproc)\"" >> /etc/portage/make.conf
-echo 'USE="-systemd"' >> etc/portage/make.conf
+echo "Do you want a generic file or download an already existing one ? (Y/N)"
+read user_choice
+if [[ $user_choice = "Y" ]]
+then
+	echo "Going for a custom one !"
+	ip a
+	echo "Please enter the server IP an port (format: 192.168.10.10:8000):"
+	read server_network_configuration
+	cd /tmp
+	wget http://$server_network_configuration/make.conf
+	cp /tmp/make.conf $make_file
+	sed -i "s#MAKEOPTS=\"\"#MAKEOPTS=\"-j$(nproc)\"#g" $make_file
+	rm /tmp/make.conf
+	cd /mnt/gentoo
+else
+	echo "Going for a Generic one !"
+	echo 'COMMON_FLAGS="-march=native -O2 -pipe"' >> $make_file
+	echo 'GRUB_PLATFORMS="efi-64"' >> $make_file
+	echo "MAKEOPTS=\"-j$(nproc)\"" >> $make_file
+	echo 'USE="-systemd -ipv6"' >> $make_file
+fi
 echo "done !"
 echo "########################################"
 
 echo "############################################"
 echo "Configuring mirrors"
-echo 'GENTOO_MIRRORS="ftp://ftp.free.fr/mirrors/ftp.gentoo.org/ http://ftp.free.fr/mirrors/ftp.gentoo.org/ https://mirrors.ircam.fr/pub/gentoo-distfiles/"' >> etc/portage/make.conf
-# mirrorselect -i -o >> /mnt/gentoo/etc/portage/make.conf
+if [[ $user_choice = "N" ]]
+then
+	mirrorselect -i -o >> $make_file
+fi
 mkdir --parents etc/portage/repos.conf
 cp usr/share/portage/config/repos.conf etc/portage/repos.conf/gentoo.conf
 cp --dereference /etc/resolv.conf etc/

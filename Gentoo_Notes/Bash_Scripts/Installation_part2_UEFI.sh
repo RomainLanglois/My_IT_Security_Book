@@ -8,7 +8,6 @@ echo "Please enter disk partion to mount boot:"
 read boot_partition
 mount /dev/$boot_partition /boot
 emerge-webrsync
-# Coffe break, it can take a long time
 emerge --verbose --update --deep --newuse @world 
 echo "Done !"
 echo "########################################"
@@ -36,22 +35,34 @@ echo "Done !"
 echo "########################################"
 
 echo "########################################"
-echo "Installing linux firmware and kernel sources"
+echo "Installing / Configuring linux firmware, kernel sources and initramfs"
 echo "sys-kernel/linux-firmware linux-fw-redistributable no-source-code" >> /etc/portage/package.license
 emerge -q sys-kernel/linux-firmware
-emerge -q sys-kernel/gentoo-sources genkernel
+emerge -q sys-kernel/gentoo-sources
+emerge -q sys-fs/cryptsetup sys-fs/lvm2
 eselect kernel list
 echo "Please select the kernel:"
 read kernel
 eselect kernel set $kernel
-echo "Done !"
-echo "########################################"
-
-echo "########################################"
-echo "Installing lvm cryptsetup then the linux Kernel"
-emerge -q sys-fs/cryptsetup sys-fs/lvm2
-genkernel --luks --lvm --no-zfs all
-genkernel --luks --lvm initramfs
+cd /usr/src/linux
+echo "Do you want to create a generic kernel or use an already exiting one ? (Y/N)"
+read user_choice
+if [[ $user_choice = "Y" ]]
+then
+	emerge -q sys-kernel/genkernel
+	genkernel --luks --lvm --no-zfs all
+	genkernel --luks --lvm initramfs
+else
+	cd /usr/src/linux
+	echo "Choose the kernel file to download:"
+	read kernel_file
+	wget http://$server_network_configuration/$kernel_file
+	make -j$(nproc) && make modules_install && make install 
+	emerge --ask sys-kernel/dracut
+	echo "add_dracutmodules+=" lvm crypt "" >> /etc/dracut.conf
+	echo "use_fstab="yes"" >> /etc/dracut.conf
+	dracut -f
+fi
 echo "Done !"
 echo "########################################"
 
@@ -69,12 +80,12 @@ echo "Done !"
 echo "########################################"
 
 echo "########################################"
-blkid
-# Revoir la manière d'entrer les informations piur compléter le /etc/fstab -> PAS CLAIR !
-# Mais fonctionne correctement !!
-echo "Please enter UUID LUKS for /boot then / then /home:"
+blkid!
+echo "Please enter UUID LUKS for /boot partition:"
 read UUID_boot
+echo "Please enter UUID LUKS for / partition:"
 read UUID_luks_root
+echo "Please enter UUID LUKS for /home partition:"
 read UUID_luks_home
 echo "UUID=$UUID_boot            /boot           vfat            noauto,noatime  1 2" >> /etc/fstab
 echo "UUID=$UUID_luks_root       /               ext4            defaults        0 1" >> /etc/fstab
