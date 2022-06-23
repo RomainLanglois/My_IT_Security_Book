@@ -4,7 +4,7 @@ echo "Preparing the environment and emerging @world"
 source /etc/profile
 export PS1="(chroot) ${PS1}"
 lsblk
-echo "Please enter disk partion to mount boot:"
+echo "Please enter disk partition where to mount boot (ex: sda2):"
 read boot_partition
 mount /dev/$boot_partition /boot
 emerge-webrsync
@@ -29,7 +29,7 @@ echo "Done !"
 echo "########################################"
 
 echo "########################################"
-echo "Configuring tthe keymap"
+echo "Configuring the keymap"
 sed -i 's/keymap=\"us\"/keymap=\"fr\"/g' /etc/conf.d/keymaps
 echo "Done !"
 echo "########################################"
@@ -40,28 +40,37 @@ echo "sys-kernel/linux-firmware linux-fw-redistributable no-source-code" >> /etc
 emerge -q sys-kernel/linux-firmware
 emerge -q sys-kernel/gentoo-sources
 emerge -q sys-fs/cryptsetup sys-fs/lvm2
+emerge -q app-arch/lz4
 eselect kernel list
 echo "Please select the kernel:"
 read kernel
 eselect kernel set $kernel
 cd /usr/src/linux
+# Pas clair echo à revoir !
 echo "Do you want to create a generic kernel or use an already exiting one ? (Y/N)"
 read user_choice
 if [[ $user_choice = "Y" ]]
 then
 	emerge -q sys-kernel/genkernel
 	genkernel --luks --lvm --no-zfs all
-	genkernel --luks --lvm initramfs
+	genkernel --luks --lvm --compress-initramfs-type=lz4 initramfs
 else
 	cd /usr/src/linux
-	echo "Choose the kernel file to download:"
-	read kernel_file
-	wget http://$server_network_configuration/$kernel_file
+	wget https://raw.githubusercontent.com/RomainLanglois/Gentoo/main/Configuration_files/config_kernel_5-15-41.config
+	mv config_kernel_*.config .config
 	make -j$(nproc) && make modules_install && make install 
-	emerge --ask sys-kernel/dracut
-	echo "add_dracutmodules+=" lvm crypt "" >> /etc/dracut.conf
-	echo "use_fstab="yes"" >> /etc/dracut.conf
-	dracut -f
+	emerge -q sys-kernel/genkernel
+	genkernel --luks --lvm --kernel-config=/usr/src/linux/.config --compress-initramfs-type=lz4 initramfs
+	
+	# Dracut à finaliser lors de l'installation et configuration du TPM
+	#emerge -q sys-kernel/dracut
+	#echo "add_dracutmodules+=" lvm crypt "" >> /etc/dracut.conf
+	#echo "use_fstab="yes"" >> /etc/dracut.conf
+	## Trouver un moyen de compresser l'initramfs
+	## -> Pas sur ci fonctionnel
+	#echo "compress="lz4"" >> /etc/dracut.conf
+	## ls /lib/modules/5.15.41-gentoo
+	#dracut --kver $(uname -a | cut -f3 -d " ")	
 fi
 echo "Done !"
 echo "########################################"
@@ -80,8 +89,8 @@ echo "Done !"
 echo "########################################"
 
 echo "########################################"
-blkid!
-echo "Please enter UUID LUKS for /boot partition:"
+blkid
+echo "Please enter UUID for /boot partition:"
 read UUID_boot
 echo "Please enter UUID LUKS for / partition:"
 read UUID_luks_root
@@ -95,15 +104,17 @@ echo "########################################"
 
 echo "########################################"
 echo "Installing and configuring the bootloader (grub)"
-emerge -q sys-boot/grub:2
+rm -rf /etc/portage/package.use/
 echo "sys-boot/grub:2 device-mapper" >> /etc/portage/package.use
+emerge -q sys-boot/grub:2
 blkid | grep -i luks
 echo "Please enter the UUID for the partion holding the LUKS container:"
 read luks_container
-sed -i "s/\#GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"dolvm crypt_root=UUID=$luks_container\" /g" /etc/default/grub
+sed -i "s/\#GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"dolvm crypt_root=UUID=$luks_container\" keymap=\"fr\"/g" /etc/default/grub
 grub-install --target=x86_64-efi --efi-directory=/boot
 grub-mkconfig -o /boot/grub/grub.cfg
 rc-update add lvm boot
+rc-update add dmcrypt boot
 echo "Done !"
 echo "########################################"
 
@@ -118,6 +129,7 @@ read username
 useradd -m -G wheel -s /bin/bash $username
 passwd
 passwd $username
+echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 echo "Done !"
 echo "########################################"
 
@@ -126,6 +138,7 @@ echo "Umounting the environment"
 cd
 umount /dev/$boot_partition
 lsblk
+# PB comment continuer un script en sortant de l'environnement chroot
 exit
 source /etc/profile
 cd
